@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>多功能测试网页</title>
+    <style>
+        /* ===== 全局重置 & 变量 ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #f4f6fb;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --text-secondary: #475569;
+            --border: #e2e8f0;
+            --primary: #6366f1;
+            --primary-light: #818cf8;
+            --primary-dark: #4f46e5;
+            --shadow: 0 4px 24px rgba(99, 102, 241, 0.12);
+            --radius: 16px;
+            --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body.dark {
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --text: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --border: #334155;
+            --shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            min-height: 100vh;
+            padding: 24px;
+            transition: background var(--transition), color var(--transition);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        /* ===== 布局容器 ===== */
+        .app {
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        /* ===== 顶栏 ===== */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 22px;
+            border: none;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all var(--transition);
+            background: var(--card-bg);
+            color: var(--text);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(99, 102, 241, 0.25);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            border-color: var(--primary-dark);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-outline:hover {
+            background: var(--primary);
+            color: #fff;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: #fff;
+            border-color: #ef4444;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+            border-color: #dc2626;
+        }
+
+        .btn-success {
+            background: #22c55e;
+            color: #fff;
+            border-color: #22c55e;
+        }
+
+        .btn-success:hover {
+            background: #16a34a;
+            border-color: #16a34a;
+        }
+
+        .btn-icon {
+            padding: 10px 14px;
+            font-size: 18px;
+            line-height: 1;
+        }
+
+        /* ===== 网格卡片 ===== */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 24px 26px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            transition: all var(--transition);
+        }
+
+        .card:hover {
+            box-shadow: 0 8px 40px rgba(99, 102, 241, 0.15);
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-title .badge {
+            font-size: 12px;
+            background: var(--primary);
+            color: #fff;
+            padding: 2px 12px;
+            border-radius: 40px;
+            font-weight: 500;
+        }
+
+        .card-sub {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+        }
+
+        /* ===== 表单 ===== */
+        .form-group {
+            margin-bottom: 14px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 500;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--bg);
+            color: var(--text);
+            font-size: 14px;
+            transition: border var(--transition);
+            outline: none;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 70px;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        /* ===== 计数器 ===== */
+        .counter-wrap {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .counter-wrap .number {
+            font-size: 42px;
+            font-weight: 700;
+            min-width: 70px;
+            text-align: center;
+            color: var(--primary);
+        }
+
+        .counter-wrap .btn-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* ===== 颜色选择 ===== */
+        .color-grid {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+
+        .color-swatch {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 3px solid transparent;
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+
+        .color-swatch:hover {
+            transform: scale(1.1);
+        }
+
+        .color-swatch.active {
+            border-color: var(--text);
+            box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px var(--primary);
+        }
+
+        /* ===== 进度条 ===== */
+        .progress-wrap {
+            margin: 12px 0;
+        }
+
+        .progress-bar {
+            height: 10px;
+            background: var(--border);
+            border-radius: 40px;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+
+        .progress-bar .fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--primary), var(--primary-light));
+            border-radius: 40px;
+            transition: width 0.6s ease;
+        }
+
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        /* ===== 开关 ===== */
+        .toggle-wrap {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin: 8px 0;
+        }
+
+        .toggle {
+            position: relative;
+            width: 50px;
+            height: 28px;
+            background: var(--border);
+            border-radius: 40px;
+            cursor: pointer;
+            transition: background var(--transition);
+            flex-shrink: 0;
+        }
+
+        .toggle.active {
+            background: var(--primary);
+        }
+
+        .toggle .thumb {
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 22px;
+            height: 22px;
+            background: #fff;
+            border-radius: 50%;
+            transition: transform var(--transition);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .toggle.active .thumb {
+            transform: translateX(22px);
+        }
+
+        /* ===== Toast 通知 ===== */
+        .toast-container {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            z-index: 9999;
+            max-width: 360px;
+            width: 100%;
+        }
+
+        .toast {
+            background: var(--card-bg);
+            color: var(--text);
+            padding: 16px 20px;
+            border-radius: 12px;
+            box-shadow: 0 12px 48px rgba(0, 0, 0, 0.18);
+            border-left: 5px solid var(--primary);
+            animation: slideIn 0.4s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .toast.error {
+            border-left-color: #ef4444;
+        }
+        .toast.success {
+            border-left-color: #22c55e;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* ===== 模态框 ===== */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9998;
+            padding: 20px;
+        }
+
+        .modal-overlay.open {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            max-width: 460px;
+            width: 100%;
+            padding: 32px 36px;
+            box-shadow: 0 24px 80px rgba(0, 0, 0, 0.3);
+            animation: modalIn 0.3s ease;
+        }
+
+        @keyframes modalIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95) translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .modal h2 {
+            font-size: 22px;
+            margin-bottom: 8px;
+        }
+
+        .modal p {
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+
+        .modal .actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        /* ===== API 测试区 ===== */
+        .api-result {
+            background: var(--bg);
+            border-radius: 10px;
+            padding: 14px 16px;
+            font-size: 13px;
+            font-family: 'JetBrains Mono', monospace;
+            white-space: pre-wrap;
+            word-break: break-all;
+            max-height: 140px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            margin-top: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* ===== 响应式 ===== */
+        @media (max-width: 640px) {
+            .header h1 {
+                font-size: 22px;
+            }
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            .card {
+                padding: 18px 16px;
+            }
+            .modal {
+                padding: 24px 20px;
+            }
+            .toast-container {
+                right: 16px;
+                left: 16px;
+                max-width: 100%;
+            }
+        }
+
+        /* ===== 小工具 ===== */
+        .flex-between {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .mt-12 {
+            margin-top: 12px;
+        }
+        .mb-8 {
+            margin-bottom: 8px;
+        }
+        .gap-8 {
+            gap: 8px;
+        }
+        .text-center {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app">
+        <!-- ===== 顶栏 ===== -->
+        <header class="header">
+            <h1>🧪 测试工坊</h1>
+            <div class="header-actions">
+                <button class="btn btn-outline" id="themeToggle">🌙 深色</button>
+                <button class="btn btn-primary" id="showModalBtn">📦 打开模态框</button>
+            </div>
+        </header>
+
+        <!-- ===== 网格 ===== -->
+        <div class="grid">
+
+            <!-- 卡片：计数器 -->
+            <div class="card">
+                <div class="card-title">🔢 计数器 <span class="badge">交互</span></div>
+                <div class="counter-wrap">
+                    <div class="number" id="counterDisplay">0</div>
+                    <div class="btn-group">
+                        <button class="btn btn-danger btn-icon" id="counterDec">−</button>
+                        <button class="btn btn-success btn-icon" id="counterInc">+</button>
+                        <button class="btn btn-outline btn-icon" id="counterReset">↺</button>
+                    </div>
+                </div>
+                <div class="progress-wrap mt-12">
+                    <div class="progress-label">
+                        <span>进度</span>
+                        <span id="progressText">0%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="fill" id="progressFill" style="width:0%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 卡片：表单 -->
+            <div class="card">
+                <div class="card-title">📝 表单测试 <span class="badge">输入</span></div>
+                <div class="form-group">
+                    <label>姓名</label>
+                    <input type="text" id="nameInput" placeholder="输入你的名字" />
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>邮箱</label>
+                        <input type="email" id="emailInput" placeholder="you@example.com" />
+                    </div>
+                    <div class="form-group">
+                        <label>角色</label>
+                        <select id="roleSelect">
+                            <option value="访客">访客</option>
+                            <option value="测试员">测试员</option>
+                            <option value="管理员">管理员</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn btn-primary" id="submitFormBtn">提交</button>
+                <div class="api-result" id="formResult">等待提交…</div>
+            </div>
+
+            <!-- 卡片：颜色主题 + 开关 -->
+            <div class="card">
+                <div class="card-title">🎨 主题配色 <span class="badge">样式</span></div>
+                <div class="color-grid" id="colorPalette">
+                    <div class="color-swatch active" style="background:#6366f1;" data-color="#6366f1"></div>
+                    <div class="color-swatch" style="background:#ec4899;" data-color="#ec4899"></div>
+                    <div class="color-swatch" style="background:#f59e0b;" data-color="#f59e0b"></div>
+                    <div class="color-swatch" style="background:#22c55e;" data-color="#22c55e"></div>
+                    <div class="color-swatch" style="background:#ef4444;" data-color="#ef4444"></div>
+                </div>
+                <div class="toggle-wrap mt-12">
+                    <span style="font-weight:500;">🌗 暗色模式</span>
+                    <div class="toggle" id="darkToggle">
+                        <div class="thumb"></div>
+                    </div>
+                    <span id="darkStatus" style="font-size:13px;color:var(--text-secondary);">关闭</span>
+                </div>
+                <div class="toggle-wrap">
+                    <span style="font-weight:500;">🔔 通知声音</span>
+                    <div class="toggle active" id="soundToggle">
+                        <div class="thumb"></div>
+                    </div>
+                    <span id="soundStatus" style="font-size:13px;color:var(--text-secondary);">开启</span>
+                </div>
+            </div>
+
+            <!-- 卡片：API 测试 -->
+            <div class="card">
+                <div class="card-title">🌐 API 测试 <span class="badge">网络</span></div>
+                <div class="flex-between">
+                    <button class="btn btn-primary" id="fetchApiBtn">📥 获取用户</button>
+                    <button class="btn btn-outline" id="clearApiBtn">清空</button>
+                </div>
+                <div class="api-result" id="apiResult">点击按钮请求 API …</div>
+            </div>
+
+            <!-- 卡片：Toast 通知 -->
+            <div class="card">
+                <div class="card-title">💬 通知 <span class="badge">反馈</span></div>
+                <div class="form-row">
+                    <button class="btn btn-success" id="toastSuccess">✅ 成功</button>
+                    <button class="btn btn-danger" id="toastError">❌ 错误</button>
+                    <button class="btn btn-primary" id="toastInfo">ℹ️ 信息</button>
+                </div>
+                <div class="card-sub mt-12">点击触发右下角 Toast 通知</div>
+            </div>
+
+            <!-- 卡片：更多测试 -->
+            <div class="card">
+                <div class="card-title">⚡ 快速测试 <span class="badge">工具</span></div>
+                <div class="form-row">
+                    <button class="btn btn-outline" id="alertBtn">📢 Alert</button>
+                    <button class="btn btn-outline" id="confirmBtn">❓ Confirm</button>
+                    <button class="btn btn-outline" id="promptBtn">✏️ Prompt</button>
+                </div>
+                <div class="api-result" id="quickResult">点击按钮查看结果…</div>
+            </div>
+
+        </div>
+
+        <!-- 页脚 -->
+        <div style="text-align:center;padding:24px 0 8px;font-size:13px;color:var(--text-secondary);border-top:1px solid var(--border);margin-top:16px;">
+            🧪 测试工坊 · 所有交互均在本地运行 · 按需测试
+        </div>
+    </div>
+
+    <!-- ===== 模态框 ===== -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+            <h2>📦 模态框示例</h2>
+            <p>这是一个原生模态框，用于展示额外内容或操作确认。点击外部或按钮关闭。</p>
+            <div class="actions">
+                <button class="btn btn-outline" id="modalCancel">取消</button>
+                <button class="btn btn-primary" id="modalConfirm">确认</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== Toast 容器 ===== -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+        // ============================================================
+        //  1. DOM 引用
+        // ============================================================
+        const $ = (sel) => document.querySelector(sel);
+        const $$ = (sel) => document.querySelectorAll(sel);
+
+        const counterDisplay = $('#counterDisplay');
+        const counterInc = $('#counterInc');
+        const counterDec = $('#counterDec');
+        const counterReset = $('#counterReset');
+        const progressFill = $('#progressFill');
+        const progressText = $('#progressText');
+
+        const nameInput = $('#nameInput');
+        const emailInput = $('#emailInput');
+        const roleSelect = $('#roleSelect');
+        const submitFormBtn = $('#submitFormBtn');
+        const formResult = $('#formResult');
+
+        const colorPalette = $('#colorPalette');
+        const darkToggle = $('#darkToggle');
+        const darkStatus = $('#darkStatus');
+        const soundToggle = $('#soundToggle');
+        const soundStatus = $('#soundStatus');
+        const themeToggleBtn = $('#themeToggle');
+
+        const fetchApiBtn = $('#fetchApiBtn');
+        const clearApiBtn = $('#clearApiBtn');
+        const apiResult = $('#apiResult');
+
+        const toastSuccess = $('#toastSuccess');
+        const toastError = $('#toastError');
+        const toastInfo = $('#toastInfo');
+        const toastContainer = $('#toastContainer');
+
+        const alertBtn = $('#alertBtn');
+        const confirmBtn = $('#confirmBtn');
+        const promptBtn = $('#promptBtn');
+        const quickResult = $('#quickResult');
+
+        const showModalBtn = $('#showModalBtn');
+        const modalOverlay = $('#modalOverlay');
+        const modalCancel = $('#modalCancel');
+        const modalConfirm = $('#modalConfirm');
+
+        // ============================================================
+        //  2. 计数器 + 进度条
+        // ============================================================
+        let count = 0;
+        const MAX = 100;
+
+        function updateCounter() {
+            counterDisplay.textContent = count;
+            const pct = Math.min(Math.max((count / MAX) * 100, 0), 100);
+            progressFill.style.width = pct + '%';
+            progressText.textContent = Math.round(pct) + '%';
+        }
+
+        counterInc.addEventListener('click', () => {
+            if (count < MAX) { count++; }
+            updateCounter();
+        });
+        counterDec.addEventListener('click', () => {
+            if (count > 0) { count--; }
+            updateCounter();
+        });
+        counterReset.addEventListener('click', () => {
+            count = 0;
+            updateCounter();
+        });
+
+        // ============================================================
+        //  3. 表单提交
+        // ============================================================
+        submitFormBtn.addEventListener('click', () => {
+            const name = nameInput.value.trim() || '未填写';
+            const email = emailInput.value.trim() || '未填写';
+            const role = roleSelect.value;
+            formResult.textContent =
+                `👤 姓名: ${name}\n📧 邮箱: ${email}\n🎯 角色: ${role}\n⏱️ 提交时间: ${new Date().toLocaleString()}`;
+            showToast(`表单已提交 (${name})`, 'success');
+        });
+
+        // ============================================================
+        //  4. 颜色主题
+        // ============================================================
+        const root = document.documentElement;
+
+        colorPalette.addEventListener('click', (e) => {
+            const swatch = e.target.closest('.color-swatch');
+            if (!swatch) return;
+            $$('.color-swatch').forEach(el => el.classList.remove('active'));
+            swatch.classList.add('active');
+            const color = swatch.dataset.color;
+            root.style.setProperty('--primary', color);
+            // 自动生成浅色
+            root.style.setProperty('--primary-light', color + 'cc');
+            root.style.setProperty('--primary-dark', color);
+            showToast(`主题色已切换`, 'info');
+        });
+
+        // ============================================================
+        //  5. 暗色模式 (双控)
+        // ============================================================
+        let darkMode = false;
+
+        function setDarkMode(on) {
+            darkMode = on;
+            document.body.classList.toggle('dark', on);
+            darkToggle.classList.toggle('active', on);
+            darkStatus.textContent = on ? '开启' : '关闭';
+            themeToggleBtn.textContent = on ? '☀️ 亮色' : '🌙 深色';
+        }
+
+        darkToggle.addEventListener('click', () => setDarkMode(!darkMode));
+        themeToggleBtn.addEventListener('click', () => setDarkMode(!darkMode));
+
+        // ============================================================
+        //  6. 通知声音开关
+        // ============================================================
+        let soundEnabled = true;
+
+        soundToggle.addEventListener('click', () => {
+            soundEnabled = !soundEnabled;
+            soundToggle.classList.toggle('active', soundEnabled);
+            soundStatus.textContent = soundEnabled ? '开启' : '关闭';
+            if (soundEnabled) {
+                playBeep();
+            }
+        });
+
+        function playBeep() {
+            if (!soundEnabled) return;
+            try {
+                const ctx = new(window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.frequency.value = 800;
+                osc.type = 'sine';
+                gain.gain.value = 0.12;
+                osc.start();
+                osc.stop(ctx.currentTime + 0.12);
+            } catch (_) { /* 静默降级 */ }
+        }
+
+        // ============================================================
+        //  7. Toast 通知系统
+        // ============================================================
+        function showToast(message, type = 'info', duration = 2800) {
+            const el = document.createElement('div');
+            el.className = `toast ${type}`;
+            const icons = { info: 'ℹ️', success: '✅', error: '❌' };
+            el.innerHTML = `${icons[type] || 'ℹ️'} ${message}`;
+            toastContainer.appendChild(el);
+            if (soundEnabled) playBeep();
+            setTimeout(() => {
+                el.style.opacity = '0';
+                el.style.transform = 'translateX(30px)';
+                setTimeout(() => el.remove(), 400);
+            }, duration);
+        }
+
+        toastSuccess.addEventListener('click', () => showToast('操作成功完成！', 'success'));
+        toastError.addEventListener('click', () => showToast('发生了一个错误', 'error'));
+        toastInfo.addEventListener('click', () => showToast('这是一条信息通知', 'info'));
+
+        // ============================================================
+        //  8. API 测试 (fetch)
+        // ============================================================
+        fetchApiBtn.addEventListener('click', async () => {
+            apiResult.textContent = '⏳ 加载中…';
+            try {
+                const res = await fetch('https://jsonplaceholder.typicode.com/users/1');
+                if (!res.ok) throw new Error('网络响应错误');
+                const data = await res.json();
+                apiResult.textContent = JSON.stringify(data, null, 2);
+                showToast('API 数据获取成功', 'success');
+            } catch (err) {
+                apiResult.textContent = `❌ 错误: ${err.message}`;
+                showToast('API 请求失败', 'error');
+            }
+        });
+
+        clearApiBtn.addEventListener('click', () => {
+            apiResult.textContent = '已清空';
+        });
+
+        // ============================================================
+        //  9. Alert / Confirm / Prompt
+        // ============================================================
+        alertBtn.addEventListener('click', () => {
+            alert('🧪 这是一个 Alert 测试弹窗');
+            quickResult.textContent = '✅ Alert 已触发';
+        });
+
+        confirmBtn.addEventListener('click', () => {
+            const ok = confirm('🧪 这是一个 Confirm 测试\n你确定要继续吗？');
+            quickResult.textContent = ok ? '✅ 用户点击了“确定”' : '❌ 用户点击了“取消”';
+            if (ok) showToast('已确认', 'success');
+            else showToast('已取消', 'info');
+        });
+
+        promptBtn.addEventListener('click', () => {
+            const val = prompt('🧪 请输入一些文字：', '测试输入');
+            if (val !== null) {
+                quickResult.textContent = `📝 输入内容: “${val || '(空)'}”`;
+                showToast(`输入: ${val || '(空)'}`, 'info');
+            } else {
+                quickResult.textContent = '❌ 用户取消了输入';
+            }
+        });
+
+        // ============================================================
+        //  10. 模态框
+        // ============================================================
+        function openModal() {
+            modalOverlay.classList.add('open');
+        }
+
+        function closeModal() {
+            modalOverlay.classList.remove('open');
+        }
+
+        showModalBtn.addEventListener('click', openModal);
+        modalCancel.addEventListener('click', closeModal);
+        modalConfirm.addEventListener('click', () => {
+            closeModal();
+            showToast('已确认操作 ✅', 'success');
+        });
+        modalOverlay.addEventListener('click', (e) => {
+            if (e.target === modalOverlay) closeModal();
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeModal();
+        });
+
+        // ============================================================
+        //  11. 额外：Enter 触发表单提交
+        // ============================================================
+        [nameInput, emailInput].forEach(field => {
+            field.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') submitFormBtn.click();
+            });
+        });
+
+        // ============================================================
+        //  12. 初始化
+        // ============================================================
+        updateCounter();
+        // 默认暗色关闭
+        setDarkMode(false);
+        // 声音开关默认开
+        soundToggle.classList.add('active');
+        soundStatus.textContent = '开启';
+        soundEnabled = true;
+
+        console.log('🧪 测试工坊已启动！');
+        console.log('📌 所有交互组件均可自由测试。');
+    </script>
+
+</body>
+</html>
