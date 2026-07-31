@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>背景音乐播放器测试</title>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Segoe UI','PingFang SC',Roboto,'Helvetica Neue',sans-serif;
+            background: #0b0e14;
+            color: #e8edf5;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+        .container {
+            max-width: 420px;
+            width: 100%;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 24px;
+            padding: 2rem 1.8rem;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            text-align: center;
+        }
+        .logo { font-size:1.6rem; font-weight:700; color:#00f5d4; margin-bottom:.2rem; letter-spacing:2px; }
+        .sub { color:#8aa3bc; font-size:.85rem; margin-bottom:2rem; }
+
+        .player-btn {
+            width: 80px; height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, rgba(0,245,212,0.15), rgba(0,119,182,0.15));
+            border: 2px solid rgba(0,245,212,0.25);
+            color: #00f5d4;
+            font-size: 2.4rem;
+            cursor: pointer;
+            transition: all .3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            box-shadow: 0 0 40px rgba(0,245,212,0.05);
+            position: relative;
+        }
+        .player-btn:hover { transform:scale(1.05); border-color:#00f5d4; box-shadow:0 0 60px rgba(0,245,212,0.12); }
+        .player-btn:active { transform:scale(0.95); }
+        .player-btn.loading { animation: spin 1s linear infinite; border-color:rgba(0,245,212,0.3); }
+        @keyframes spin { to { transform:rotate(360deg); } }
+
+        .song-info { display:none; margin-top:.5rem; }
+        .song-info.show { display:block; }
+        .song-info .cover {
+            width: 160px; height: 160px;
+            border-radius: 16px;
+            margin: 0 auto 1rem;
+            background: rgba(255,255,255,0.04);
+            background-size: cover;
+            background-position: center;
+            border: 1px solid rgba(255,255,255,0.06);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+        }
+        .song-info .cover.loading-cover { animation: pulse-cover 1.2s ease-in-out infinite; }
+        @keyframes pulse-cover { 0%,100%{ opacity:0.4; } 50%{ opacity:0.8; } }
+        .song-info .name { font-size:1.2rem; font-weight:600; color:#e8edf5; }
+        .song-info .artist { font-size:.9rem; color:#8aa3bc; margin-top:2px; }
+        .song-info .comment {
+            margin-top:.8rem; padding:.8rem 1rem;
+            background:rgba(255,255,255,0.03); border-radius:12px;
+            border-left:3px solid #00f5d4;
+            font-size:.85rem; color:#b8ccdd; font-style:italic; text-align:left;
+        }
+        .song-info .comment::before { content:'"'; color:#00f5d4; font-weight:700; }
+        .song-info .comment::after { content:'"'; color:#00f5d4; font-weight:700; }
+        .song-info .comment .from { display:block; margin-top:4px; font-size:.7rem; color:#5a738a; font-style:normal; text-align:right; }
+
+        .status { margin-top:1rem; font-size:.85rem; color:#5a738a; min-height:1.5rem; }
+        .status.error { color:#ff6b6b; }
+        .status.success { color:#00f5d4; }
+
+        .controls { display:flex; gap:12px; justify-content:center; margin-top:1rem; }
+        .controls .btn-sm {
+            padding:6px 18px; border-radius:20px;
+            border:1px solid rgba(255,255,255,0.08);
+            background:transparent; color:#8aa3bc;
+            cursor:pointer; font-size:.8rem; transition:.3s; font-family:inherit;
+        }
+        .controls .btn-sm:hover { border-color:#00f5d4; color:#e8edf5; }
+
+        .debug-log {
+            margin-top: 1.5rem;
+            padding: 0.8rem;
+            background: rgba(0,0,0,0.3);
+            border-radius: 12px;
+            font-size: 0.7rem;
+            color: #5a738a;
+            text-align: left;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .debug-log .log-info { color: #48cae4; }
+        .debug-log .log-error { color: #ff6b6b; }
+        .debug-log .log-success { color: #00f5d4; }
+
+        .footer { margin-top:1.5rem; font-size:.7rem; color:#3a4a5a; }
+        .footer span { color:#00f5d4; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="logo">🎵 背景音乐</div>
+        <div class="sub">网易云随机歌曲 · 热评</div>
+
+        <button class="player-btn" id="playBtn" title="点击播放随机歌曲">▶</button>
+
+        <div class="song-info" id="songInfo">
+            <div class="cover" id="cover"></div>
+            <div class="name" id="songName">歌曲名称</div>
+            <div class="artist" id="songArtist">歌手</div>
+            <div class="comment" id="songComment">加载中...<span class="from" id="commentFrom">—— 网友</span></div>
+        </div>
+
+        <div class="status" id="status">点击播放按钮获取随机歌曲</div>
+
+        <div class="controls">
+            <button class="btn-sm" id="nextBtn">⏭ 换一首</button>
+            <button class="btn-sm" id="pauseBtn">⏸ 暂停</button>
+        </div>
+
+        <div class="debug-log" id="debugLog">📋 等待操作...</div>
+
+        <div class="footer">Powered by <span>燃雨API</span> · 网易云音乐</div>
+    </div>
+
+    <script>
+        (function() {
+            'use strict';
+
+            // ============================================================
+            //  API 配置
+            // ============================================================
+            const API_URL = 'http://ryapi.sbs/API/reping.php?format=json';
+
+            // ============================================================
+            //  DOM 引用
+            // ============================================================
+            const playBtn = document.getElementById('playBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const pauseBtn = document.getElementById('pauseBtn');
+            const statusEl = document.getElementById('status');
+            const songInfo = document.getElementById('songInfo');
+            const cover = document.getElementById('cover');
+            const songName = document.getElementById('songName');
+            const songArtist = document.getElementById('songArtist');
+            const songComment = document.getElementById('songComment');
+            const commentFrom = document.getElementById('commentFrom');
+            const debugLog = document.getElementById('debugLog');
+
+            // ============================================================
+            //  日志
+            // ============================================================
+            function log(msg, type) {
+                const time = new Date().toLocaleTimeString();
+                const cls = type === 'error' ? 'log-error' : type === 'success' ? 'log-success' : 'log-info';
+                debugLog.innerHTML += `<div class="${cls}">[${time}] ${msg}</div>`;
+                debugLog.scrollTop = debugLog.scrollHeight;
+                console.log(`[${type}] ${msg}`);
+            }
+
+            // ============================================================
+            //  音频播放器
+            // ============================================================
+            let audio = null;
+            let currentSong = null;
+            let isPlaying = false;
+            let isLoading = false;
+
+            // ============================================================
+            //  状态提示
+            // ============================================================
+            function setStatus(text, type) {
+                statusEl.textContent = text;
+                statusEl.className = 'status' + (type ? ' ' + type : '');
+            }
+
+            // ============================================================
+            //  加载随机歌曲
+            // ============================================================
+            async function fetchRandomSong() {
+                if (isLoading) return null;
+                isLoading = true;
+                setStatus('⏳ 获取歌曲中...', '');
+                playBtn.classList.add('loading');
+                playBtn.textContent = '⏳';
+                log('正在请求 API: ' + API_URL, 'info');
+
+                try {
+                    const res = await fetch(API_URL);
+                    log('响应状态: ' + res.status, 'info');
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+
+                    const rawText = await res.text();
+                    log('原始响应长度: ' + rawText.length + ' 字符', 'info');
+                    // 尝试解析 JSON
+                    let data;
+                    try {
+                        data = JSON.parse(rawText);
+                    } catch (e) {
+                        log('JSON 解析失败: ' + e.message, 'error');
+                        log('原始内容: ' + rawText.substring(0, 200), 'error');
+                        throw new Error('API 返回非 JSON 格式');
+                    }
+
+                    log('解析成功，歌曲: ' + (data.name || '未知'), 'success');
+                    // 检查关键字段
+                    if (!data.url) {
+                        log('缺少 url 字段', 'error');
+                        throw new Error('API 未返回歌曲链接');
+                    }
+                    if (!data.name) {
+                        log('缺少 name 字段', 'warn');
+                    }
+
+                    return data;
+                } catch (err) {
+                    log('获取失败: ' + err.message, 'error');
+                    setStatus('❌ ' + err.message, 'error');
+                    return null;
+                } finally {
+                    isLoading = false;
+                    playBtn.classList.remove('loading');
+                }
+            }
+
+            // ============================================================
+            //  播放歌曲
+            // ============================================================
+            function playSong(data) {
+                if (!data) {
+                    log('无歌曲数据，无法播放', 'error');
+                    return;
+                }
+
+                currentSong = data;
+                log('播放歌曲: ' + data.name + ' - ' + (data.artistsname || ''), 'success');
+
+                // 显示歌曲信息
+                songInfo.classList.add('show');
+                songName.textContent = data.name || '未知歌曲';
+                songArtist.textContent = data.artistsname || '未知歌手';
+
+                // 封面
+                if (data.picurl) {
+                    cover.style.backgroundImage = `url(${data.picurl})`;
+                    cover.style.backgroundSize = 'cover';
+                    cover.style.backgroundPosition = 'center';
+                    log('封面已加载', 'info');
+                } else {
+                    cover.style.backgroundImage = 'none';
+                    cover.style.backgroundColor = 'rgba(255,255,255,0.04)';
+                    log('无封面图片', 'warn');
+                }
+
+                // 评论
+                if (data.content) {
+                    songComment.innerHTML = data.content + `<span class="from">—— ${data.nickname || '网友'}</span>`;
+                    log('热评: ' + data.content.substring(0, 30) + '...', 'info');
+                } else {
+                    songComment.innerHTML = '暂无热评<span class="from">—— 网易云音乐</span>';
+                }
+
+                // 创建音频
+                if (audio) {
+                    audio.pause();
+                    audio.src = '';
+                }
+                audio = new Audio(data.url);
+                log('音频对象已创建，URL: ' + data.url, 'info');
+
+                // 监听事件
+                audio.addEventListener('canplaythrough', function() {
+                    log('音频可以播放', 'success');
+                });
+                audio.addEventListener('ended', function() {
+                    log('播放结束，自动下一首', 'info');
+                    nextSong();
+                });
+                audio.addEventListener('error', function(e) {
+                    log('音频加载错误: ' + (e.target.error ? e.target.error.message : '未知'), 'error');
+                    setStatus('⚠️ 歌曲链接失效，尝试下一首', 'error');
+                    setTimeout(nextSong, 2000);
+                });
+
+                // 播放
+                audio.play()
+                    .then(() => {
+                        isPlaying = true;
+                        playBtn.textContent = '⏸';
+                        setStatus('🎵 正在播放：' + data.name, 'success');
+                        log('播放成功', 'success');
+                    })
+                    .catch((err) => {
+                        log('自动播放被阻止: ' + err.message, 'error');
+                        isPlaying = false;
+                        playBtn.textContent = '▶';
+                        setStatus('⚠️ 点击播放按钮继续', '');
+                    });
+            }
+
+            // ============================================================
+            //  下一首
+            // ============================================================
+            async function nextSong() {
+                if (isLoading) return;
+                setStatus('⏳ 加载下一首...', '');
+                log('请求下一首', 'info');
+                const data = await fetchRandomSong();
+                if (data) {
+                    playSong(data);
+                } else {
+                    setStatus('❌ 获取下一首失败', 'error');
+                    playBtn.textContent = '▶';
+                    log('获取下一首失败', 'error');
+                }
+            }
+
+            // ============================================================
+            //  切换播放/暂停
+            // ============================================================
+            function togglePlay() {
+                if (!audio) {
+                    log('首次播放，获取歌曲', 'info');
+                    fetchRandomSong().then(data => {
+                        if (data) playSong(data);
+                    });
+                    return;
+                }
+
+                if (isPlaying) {
+                    audio.pause();
+                    isPlaying = false;
+                    playBtn.textContent = '▶';
+                    setStatus('⏸ 已暂停', '');
+                    log('暂停播放', 'info');
+                } else {
+                    audio.play()
+                        .then(() => {
+                            isPlaying = true;
+                            playBtn.textContent = '⏸';
+                            setStatus('🎵 继续播放', 'success');
+                            log('继续播放', 'info');
+                        })
+                        .catch((err) => {
+                            log('播放失败: ' + err.message, 'error');
+                            setStatus('⚠️ 播放失败', 'error');
+                        });
+                }
+            }
+
+            // ============================================================
+            //  暂停
+            // ============================================================
+            function pauseMusic() {
+                if (audio && isPlaying) {
+                    audio.pause();
+                    isPlaying = false;
+                    playBtn.textContent = '▶';
+                    setStatus('⏸ 已暂停', '');
+                    log('手动暂停', 'info');
+                }
+            }
+
+            // ============================================================
+            //  事件绑定
+            // ============================================================
+            playBtn.addEventListener('click', togglePlay);
+            nextBtn.addEventListener('click', nextSong);
+            pauseBtn.addEventListener('click', pauseMusic);
+
+            // ============================================================
+            //  键盘快捷键
+            // ============================================================
+            document.addEventListener('keydown', function(e) {
+                if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+                if (e.key === ' ' || e.key === 'Space') {
+                    e.preventDefault();
+                    togglePlay();
+                }
+                if (e.key === 'ArrowRight') {
+                    nextSong();
+                }
+            });
+
+            // ============================================================
+            //  初始化状态
+            // ============================================================
+            setStatus('🎵 点击播放按钮获取随机歌曲', '');
+            log('播放器已加载，等待操作', 'info');
+            log('API 地址: ' + API_URL, 'info');
+
+            console.log('🎵 背景音乐播放器已加载');
+            console.log('📌 操作提示: 空格键切换播放，右键下一首');
+        })();
+    </script>
+
+</body>
+</html>
