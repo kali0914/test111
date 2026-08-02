@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>高德IP定位测试</title>
+    <title>IP定位测试 · ip-api.com</title>
     <style>
         * { margin:0; padding:0; box-sizing:border-box; }
         body {
@@ -41,7 +41,7 @@
             background:rgba(0,0,0,0.3);
             border-radius:12px;
             padding:1.2rem 1.5rem;
-            margin-bottom:1.5rem;
+            margin-bottom:1rem;
             border-left:3px solid #00f5d4;
         }
         .result .label {
@@ -55,9 +55,7 @@
             font-weight:500;
             word-break:break-all;
         }
-        .result .value .highlight {
-            color:#00f5d4;
-        }
+        .result .value .highlight { color:#00f5d4; }
         .status {
             text-align:center;
             padding:0.8rem;
@@ -123,8 +121,8 @@
 <body>
 
     <div class="container">
-        <h1>📍 高德IP定位测试</h1>
-        <div class="sub">使用高德地图 IP 定位 API</div>
+        <h1>📍 IP 定位测试</h1>
+        <div class="sub">使用 ip-api.com 免费定位（无需Key）</div>
 
         <div id="resultArea">
             <div class="status loading" id="status">⏳ 正在定位...</div>
@@ -134,16 +132,20 @@
                     <div class="value" id="city">--</div>
                 </div>
                 <div class="result">
-                    <div class="label">🆔 行政区划代码 (adcode)</div>
-                    <div class="value" id="adcode">--</div>
+                    <div class="label">🌐 国家</div>
+                    <div class="value" id="country">--</div>
+                </div>
+                <div class="result">
+                    <div class="label">🆔 地区码 (adcode 近似)</div>
+                    <div class="value" id="region">--</div>
+                </div>
+                <div class="result">
+                    <div class="label">📌 坐标 (纬度/经度)</div>
+                    <div class="value" id="coords">--</div>
                 </div>
                 <div class="result">
                     <div class="label">🌐 IP 地址</div>
                     <div class="value" id="ip">--</div>
-                </div>
-                <div class="result">
-                    <div class="label">📌 完整信息</div>
-                    <div class="value" id="fullInfo">--</div>
                 </div>
             </div>
             <button class="btn" id="refreshBtn">🔄 重新定位</button>
@@ -154,20 +156,20 @@
             <pre id="rawJson" style="color:#8aa3bc;margin-top:4px;white-space:pre-wrap;">等待请求...</pre>
         </div>
 
-        <div class="footer">Powered by <span>高德地图</span> · Key: 07e8471d0ce7eb25577ea4a041bf3e4c</div>
+        <div class="footer">Powered by <span>ip-api.com</span> · 免费 IP 定位</div>
     </div>
 
     <script>
         (function() {
             'use strict';
 
-            const WEATHER_KEY = '07e8471d0ce7eb25577ea4a041bf3e4c';
             const statusEl = document.getElementById('status');
             const resultContent = document.getElementById('resultContent');
             const cityEl = document.getElementById('city');
-            const adcodeEl = document.getElementById('adcode');
+            const countryEl = document.getElementById('country');
+            const regionEl = document.getElementById('region');
+            const coordsEl = document.getElementById('coords');
             const ipEl = document.getElementById('ip');
-            const fullInfoEl = document.getElementById('fullInfo');
             const rawJsonEl = document.getElementById('rawJson');
             const refreshBtn = document.getElementById('refreshBtn');
 
@@ -179,7 +181,8 @@
                 rawJsonEl.textContent = '请求中...';
 
                 try {
-                    const url = `https://restapi.amap.com/v3/ip?key=${WEATHER_KEY}`;
+                    // 使用 ip-api.com 的 JSON 接口（免费版不支持 HTTPS，使用 HTTP）
+                    const url = 'http://ip-api.com/json/';
                     const res = await fetch(url);
                     if (!res.ok) throw new Error(`HTTP ${res.status}`);
                     const data = await res.json();
@@ -187,18 +190,18 @@
                     // 显示原始数据
                     rawJsonEl.textContent = JSON.stringify(data, null, 2);
 
-                    if (data.status !== '1') {
-                        throw new Error(data.info || '定位失败');
+                    // 检查状态
+                    if (data.status !== 'success') {
+                        throw new Error(data.message || '定位失败');
                     }
 
                     // 填充结果
                     cityEl.textContent = data.city || '未知城市';
-                    adcodeEl.textContent = data.adcode || '--';
-                    ipEl.textContent = data.ip || '--';
-                    fullInfoEl.innerHTML = `
-                        <span class="highlight">${data.city}</span> · 
-                        ${data.province || ''} ${data.adcode ? `(adcode: ${data.adcode})` : ''}
-                    `;
+                    countryEl.textContent = data.country || '--';
+                    regionEl.textContent = data.regionCode || data.region || '--';
+                    coordsEl.textContent = `${data.lat}°, ${data.lon}°`;
+                    ipEl.textContent = data.query || '--';
+
                     resultContent.style.display = 'block';
                     statusEl.textContent = '✅ 定位成功！';
                     statusEl.className = 'status success';
