@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>高德IP定位测试</title>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Segoe UI','PingFang SC',Roboto,'Helvetica Neue',sans-serif;
+            background:#0b0e14; color:#e8edf5;
+            min-height:100vh;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            padding:2rem;
+        }
+        .container {
+            max-width:600px;
+            width:100%;
+            background:rgba(255,255,255,0.03);
+            border:1px solid rgba(255,255,255,0.06);
+            border-radius:24px;
+            padding:2.5rem 2rem;
+            backdrop-filter:blur(8px);
+            box-shadow:0 20px 60px rgba(0,0,0,0.5);
+        }
+        h1 {
+            color:#00f5d4;
+            font-size:1.8rem;
+            margin-bottom:0.5rem;
+            text-align:center;
+        }
+        .sub {
+            color:#8aa3bc;
+            text-align:center;
+            margin-bottom:2rem;
+            font-size:.95rem;
+        }
+        .result {
+            background:rgba(0,0,0,0.3);
+            border-radius:12px;
+            padding:1.2rem 1.5rem;
+            margin-bottom:1.5rem;
+            border-left:3px solid #00f5d4;
+        }
+        .result .label {
+            color:#8aa3bc;
+            font-size:.85rem;
+            margin-top:6px;
+        }
+        .result .value {
+            color:#e8edf5;
+            font-size:1.1rem;
+            font-weight:500;
+            word-break:break-all;
+        }
+        .result .value .highlight {
+            color:#00f5d4;
+        }
+        .status {
+            text-align:center;
+            padding:0.8rem;
+            border-radius:10px;
+            font-size:.9rem;
+            margin-top:0.5rem;
+        }
+        .status.loading {
+            background:rgba(72,202,228,0.1);
+            color:#48cae4;
+        }
+        .status.success {
+            background:rgba(0,245,212,0.1);
+            color:#00f5d4;
+        }
+        .status.error {
+            background:rgba(255,107,107,0.1);
+            color:#ff6b6b;
+        }
+        .btn {
+            display:inline-block;
+            padding:10px 28px;
+            background:linear-gradient(135deg,#00f5d4,#0077b6);
+            border:none;
+            border-radius:30px;
+            color:#0b0e14;
+            font-weight:700;
+            font-size:1rem;
+            cursor:pointer;
+            transition:.3s;
+            font-family:inherit;
+            box-shadow:0 4px 20px rgba(0,245,212,0.15);
+            margin-top:1rem;
+        }
+        .btn:hover { transform:scale(1.02); box-shadow:0 8px 30px rgba(0,245,212,0.25); }
+        .btn:active { transform:scale(0.98); }
+        .raw-data {
+            margin-top:1.5rem;
+            padding:0.8rem 1rem;
+            background:rgba(0,0,0,0.3);
+            border-radius:8px;
+            font-size:.75rem;
+            color:#5a738a;
+            overflow-wrap:break-word;
+            max-height:200px;
+            overflow-y:auto;
+            font-family:'Courier New',monospace;
+            border:1px solid rgba(255,255,255,0.04);
+        }
+        .raw-data .label {
+            color:#8aa3bc;
+            margin-bottom:4px;
+        }
+        .footer {
+            margin-top:2rem;
+            text-align:center;
+            color:#5a738a;
+            font-size:.8rem;
+        }
+        .footer span { color:#00f5d4; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>📍 高德IP定位测试</h1>
+        <div class="sub">使用高德地图 IP 定位 API</div>
+
+        <div id="resultArea">
+            <div class="status loading" id="status">⏳ 正在定位...</div>
+            <div id="resultContent" style="display:none;">
+                <div class="result">
+                    <div class="label">📍 城市</div>
+                    <div class="value" id="city">--</div>
+                </div>
+                <div class="result">
+                    <div class="label">🆔 行政区划代码 (adcode)</div>
+                    <div class="value" id="adcode">--</div>
+                </div>
+                <div class="result">
+                    <div class="label">🌐 IP 地址</div>
+                    <div class="value" id="ip">--</div>
+                </div>
+                <div class="result">
+                    <div class="label">📌 完整信息</div>
+                    <div class="value" id="fullInfo">--</div>
+                </div>
+            </div>
+            <button class="btn" id="refreshBtn">🔄 重新定位</button>
+        </div>
+
+        <div class="raw-data" id="rawData">
+            <div class="label">📦 原始 API 返回数据：</div>
+            <pre id="rawJson" style="color:#8aa3bc;margin-top:4px;white-space:pre-wrap;">等待请求...</pre>
+        </div>
+
+        <div class="footer">Powered by <span>高德地图</span> · Key: 07e8471d0ce7eb25577ea4a041bf3e4c</div>
+    </div>
+
+    <script>
+        (function() {
+            'use strict';
+
+            const WEATHER_KEY = '07e8471d0ce7eb25577ea4a041bf3e4c';
+            const statusEl = document.getElementById('status');
+            const resultContent = document.getElementById('resultContent');
+            const cityEl = document.getElementById('city');
+            const adcodeEl = document.getElementById('adcode');
+            const ipEl = document.getElementById('ip');
+            const fullInfoEl = document.getElementById('fullInfo');
+            const rawJsonEl = document.getElementById('rawJson');
+            const refreshBtn = document.getElementById('refreshBtn');
+
+            async function fetchLocation() {
+                // 重置界面
+                statusEl.textContent = '⏳ 正在定位...';
+                statusEl.className = 'status loading';
+                resultContent.style.display = 'none';
+                rawJsonEl.textContent = '请求中...';
+
+                try {
+                    const url = `https://restapi.amap.com/v3/ip?key=${WEATHER_KEY}`;
+                    const res = await fetch(url);
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    const data = await res.json();
+
+                    // 显示原始数据
+                    rawJsonEl.textContent = JSON.stringify(data, null, 2);
+
+                    if (data.status !== '1') {
+                        throw new Error(data.info || '定位失败');
+                    }
+
+                    // 填充结果
+                    cityEl.textContent = data.city || '未知城市';
+                    adcodeEl.textContent = data.adcode || '--';
+                    ipEl.textContent = data.ip || '--';
+                    fullInfoEl.innerHTML = `
+                        <span class="highlight">${data.city}</span> · 
+                        ${data.province || ''} ${data.adcode ? `(adcode: ${data.adcode})` : ''}
+                    `;
+                    resultContent.style.display = 'block';
+                    statusEl.textContent = '✅ 定位成功！';
+                    statusEl.className = 'status success';
+
+                } catch (err) {
+                    console.error('定位失败:', err);
+                    statusEl.textContent = '❌ ' + err.message;
+                    statusEl.className = 'status error';
+                    rawJsonEl.textContent = '错误: ' + err.message;
+                    resultContent.style.display = 'none';
+                }
+            }
+
+            // 页面加载时自动定位
+            fetchLocation();
+
+            // 点击刷新按钮重新定位
+            refreshBtn.addEventListener('click', fetchLocation);
+
+        })();
+    </script>
+
+</body>
+</html>
